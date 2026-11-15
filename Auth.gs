@@ -12,6 +12,7 @@ const AUTH = {
   MAX_FAILS: 5,
   LOCK_MINUTES: 15,
   FIRST_ADMIN: 'admin@sidra.local',
+  TEMP_PASSWORD: 'sidra@123',   // starting password for the first admin; the app forces a change at first sign-in
   BAD_LOGIN: 'Email or password is incorrect.'
 };
 /** Actions a user may call while they still have to choose a new password. */
@@ -243,7 +244,7 @@ function ensureAdmin_() {
   const note = noPw ? ' ' + noPw + ' user(s) have no password yet — set one in the app: Settings ▸ Members ▸ Reset password.' : '';
   // An administrator only counts if they can actually sign in (a sheet from the older board has no passwords).
   if (tbl.rows.some(function (r) { return r.Role === 'Admin' && r.Active && r.PasswordHash; })) return '• Users: ' + tbl.rows.length + ' user(s); administrator present.' + note;
-  const pw = newSalt_().slice(0, 14);
+  const pw = AUTH.TEMP_PASSWORD;
   let u = tbl.rows.find(function (r) { return r.Role === 'Admin' && r.Active; }) || tbl.rows.find(function (r) { return lc_(r.Email) === AUTH.FIRST_ADMIN; });
   const isNew = !u;
   if (isNew) { u = blank_('Users'); u.Email = AUTH.FIRST_ADMIN; u.Name = 'Administrator'; u.CreatedAt = nowIso_(); }
@@ -264,7 +265,7 @@ function resetAdminPassword() {
     const tbl = readTable_('Users');
     const u = tbl.rows.find(function (r) { return r.Role === 'Admin' && r.Active; });
     if (!u) return ensureAdmin_();
-    const pw = newSalt_().slice(0, 14);
+    const pw = AUTH.TEMP_PASSWORD;
     setPassword_(u, pw, true);
     writeRow_(tbl, u);
     const msg = 'Administrator ' + u.Email + ' — temporary password: ' + pw;
